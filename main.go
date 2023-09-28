@@ -11,6 +11,11 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
+const (
+	startTile = 28
+	tileCount = 7
+)
+
 var img *ebiten.Image
 
 func init() {
@@ -31,9 +36,12 @@ type SpriteSize struct {
 	length int
 }
 
-type Game struct{}
+type Game struct {
+	count int
+}
 
 func (g *Game) Update() error {
+	g.count++
 	return nil
 }
 
@@ -45,9 +53,9 @@ func SpriteSheet(tileSize TileSize, spriteSize SpriteSize) ([]image.Rectangle, e
 	if spriteSize.length%tileSize.length != 0 {
 		return nil, fmt.Errorf("TileSize length of %v doesn't evenly fit in the sprint sheet length of %v", tileSize.height, spriteSize.height)
 	}
-	for i := 0; i < spriteSize.length/tileSize.length; i++ {
-		for j := 0; j < spriteSize.height/tileSize.height; j++ {
-			sheet = append(sheet, image.Rectangle{image.Pt(i*tileSize.length, j*tileSize.height), image.Pt((i+1)*tileSize.length, (j+1)*tileSize.height)})
+	for i := 0; i < spriteSize.height/tileSize.height; i++ {
+		for j := 0; j < spriteSize.length/tileSize.length; j++ {
+			sheet = append(sheet, image.Rectangle{image.Pt(j*tileSize.length, i*tileSize.height), image.Pt((j+1)*tileSize.length, (i+1)*tileSize.height)})
 		}
 	}
 
@@ -55,7 +63,6 @@ func SpriteSheet(tileSize TileSize, spriteSize SpriteSize) ([]image.Rectangle, e
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-
 	spriteSheetArr, err := SpriteSheet(
 		TileSize{height: 32, length: 32},
 		SpriteSize{height: 224, length: 448},
@@ -63,7 +70,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	screen.DrawImage(img.SubImage(spriteSheetArr[5]).(*ebiten.Image), nil)
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(-float64(32)/2, -float64(32)/2)
+	op.GeoM.Translate(320/2, 240/2)
+	screen.DrawImage(img.SubImage(spriteSheetArr[((g.count/6)%tileCount)+startTile]).(*ebiten.Image), op)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
